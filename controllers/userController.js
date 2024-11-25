@@ -88,4 +88,36 @@ module.exports = {
             });
         }
     },
+    updateProfile: async (req, res) => {
+        try {
+            const updates = {
+                name: req.body.name,
+                bio: req.body.bio,
+                location: req.body.location,
+                website: req.body.website,
+                profileImage: req.body.profileImage, // Assuming the file is already uploaded and you are storing its name.
+                coverImage: req.body.coverImage,
+            };
+
+            const updatedUser = await User.findByIdAndUpdate(
+                req.user.id,
+                { $set: updates },
+                { new: true, runValidators: true } // `new: true` returns the updated user.
+            ).select("-password"); // Exclude password from response.
+
+            if (!updatedUser) {
+                return res.status(404).json({ message: "User not found." });
+            }
+
+            res.status(200).json({
+                message: "Profile updated successfully.",
+                user: updatedUser,
+            });
+        } catch (error) {
+            res.status(500).json({
+                message: "Error updating profile.",
+                error: error.message,
+            });
+        }
+    },
 }
