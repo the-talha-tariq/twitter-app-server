@@ -95,20 +95,28 @@ module.exports = {
                 bio: req.body.bio,
                 location: req.body.location,
                 website: req.body.website,
-                profileImage: req.body.profileImage, // Assuming the file is already uploaded and you are storing its name.
-                coverImage: req.body.coverImage,
             };
-
+    
+            // Check for uploaded files
+            if (req.files) {
+                if (req.files.profileImage) {
+                    updates.profileImage = req.files.profileImage[0].filename; // Save profile image name
+                }
+                if (req.files.coverImage) {
+                    updates.coverImage = req.files.coverImage[0].filename; // Save cover image name
+                }
+            }
+    
             const updatedUser = await User.findByIdAndUpdate(
                 req.user.id,
                 { $set: updates },
                 { new: true, runValidators: true } // `new: true` returns the updated user.
             ).select("-password"); // Exclude password from response.
-
+    
             if (!updatedUser) {
                 return res.status(404).json({ message: "User not found." });
             }
-
+    
             res.status(200).json({
                 message: "Profile updated successfully.",
                 user: updatedUser,
@@ -120,4 +128,112 @@ module.exports = {
             });
         }
     },
+    followUser: async (req, res) => {
+        try {
+            const currentUser = req.user.id; // From the token payload
+            const targetUserId = req.params.id;
+
+            // Prevent self-following
+            if (currentUser === targetUserId) {
+                return res.status(400).json({ message: "You cannot follow yourself." });
+            }
+
+            // Update the current user's following list
+            const currentUserUpdate = await User.findByIdAndUpdate(
+                currentUser,
+                { $addToSet: { following: targetUserId } }, // Avoid duplicates
+                { new: true }
+            );
+
+            // Update the target user's followers list
+            const targetUserUpdate = await User.findByIdAndUpdate(
+                targetUserId,
+                { $addToSet: { followers: currentUser } },
+                { new: true }
+            );
+
+            if (!targetUserUpdate) {
+                return res.status(404).json({ message: "User not found." });
+            }
+
+            res.status(200).json({
+                message: "Followed successfully.",
+                currentUser: currentUserUpdate,
+                targetUser: targetUserUpdate
+            });
+        } catch (error) {
+            res.status(500).json({ message: "Error following user.", error: error.message });
+        }
+    },
+
+    unfollowUser: async (req, res) => {
+        try {
+            const currentUser = req.user.id;
+            const targetUserId = req.params.id;
+
+            // Update the current user's following list
+            const currentUserUpdate = await User.findByIdAndUpdate(
+                currentUser,
+                { $pull: { following: targetUserId } },
+                { new: true }
+            );
+
+            // Update the target user's followers list
+            const targetUserUpdate = await User.findByIdAndUpdate(
+                targetUserId,
+                { $pull: { followers: currentUser } },
+                { new: true }
+            );
+
+            if (!targetUserUpdate) {
+                return res.status(404).json({ message: "User not found." });
+            }
+
+            res.status(200).json({
+                message: "Unfollowed successfully.",
+                currentUser: currentUserUpdate,
+                targetUser: targetUserUpdate
+            });
+        } catch (error) {
+            res.status(500).json({ message: "Error unfollowing user.", error: error.message });
+        }
+    },
+
+    getFollowing: async (req, res) => {
+        try {
+            const user = await User.findById(req.user.id)
+                .populate("following", "userName profileImage") // Only select relevant fields
+                .select("following");
+
+            if (!user) {
+                return res.status(404).json({ message: "User not found." });
+            }
+
+            res.status(200).json({
+                message: "Following list fetched successfully.",
+                following: user.following
+            });
+        } catch (error) {
+            res.status(500).json({ message: "Error fetching following list.", error: error.message });
+        }
+    },
+
+    getFollowers: async (req, res) => {
+        try {
+            const user = await User.findById(req.user.id)
+                .populate("followers", "userName profileImage")
+                .select("followers");
+
+            if (!user) {
+                return res.status(404).json({ message: "User not found." });
+            }
+
+            res.status(200).json({
+                message: "Followers list fetched successfully.",
+                followers: user.followers
+            });
+        } catch (error) {
+            res.status(500).json({ message: "Error fetching followers list.", error: error.message });
+        }
+    }
 }
