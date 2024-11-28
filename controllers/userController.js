@@ -130,6 +130,7 @@ module.exports = {
     },
     followUser: async (req, res) => {
         try {
+            console.log("Get Request")
             const currentUser = req.user.id; // From the token payload
             const targetUserId = req.params.id;
 

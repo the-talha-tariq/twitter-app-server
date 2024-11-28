@@ -12,9 +12,9 @@ router.post(
 ); // Create a new tweet
 router.get("/", tweetController.getAllTweets); // Get all tweets
 router.get("/:id", tweetController.getTweetById); // Get a tweet by ID
-router.post("/:id/like", verifyToken, tweetController.likeTweet); // Like a tweet
-router.post("/:id/retweet", verifyToken, tweetController.retweet); // Retweet a tweet
-router.post("/:id/comment", verifyToken, tweetController.commentOnTweet); // Comment on a tweet
+router.put("/:id/like", verifyToken, tweetController.likeTweet); // Like a tweet
+router.put("/:id/retweet", verifyToken, tweetController.retweet); // Retweet a tweet
+router.put("/:id/comment", verifyToken, tweetController.commentOnTweet); // Comment on a tweet
 router.delete("/:id", verifyToken, tweetController.deleteTweet); // Delete a tweet
 
 module.exports = router;

@@ -29,5 +29,5 @@ const UserSchema = new Schema({
     verified: { type: Boolean, default: false }
 });
 
-
+UserSchema.index({ userName: "text", bio: "text" });
 module.exports = mongoose.model('User',UserSchema);

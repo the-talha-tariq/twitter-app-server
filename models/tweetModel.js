@@ -40,5 +40,5 @@ const TweetSchema = new mongoose.Schema({
         default: Date.now,
     },
 });
-
+TweetSchema.index({ content: "text" });
 module.exports = mongoose.model("Tweet", TweetSchema);
